@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="description" content="AR Портрет — наведи камеру на портрет и он оживёт" />
+  <title>AR Портрет</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="splash">
+
+    <!-- Background particles -->
+    <div class="particles" aria-hidden="true">
+      <span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span>
+    </div>
+
+    <!-- Logo / icon -->
+    <div class="splash__icon">
+      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Camera outline -->
+        <rect x="4" y="14" width="56" height="40" rx="6" stroke="currentColor" stroke-width="3"/>
+        <!-- Lens -->
+        <circle cx="32" cy="34" r="11" stroke="currentColor" stroke-width="3"/>
+        <circle cx="32" cy="34" r="5" fill="currentColor" opacity="0.5"/>
+        <!-- Flash -->
+        <rect x="42" y="10" width="8" height="4" rx="2" fill="currentColor" opacity="0.7"/>
+        <!-- AR corners -->
+        <path d="M10 10 L10 4 L16 4" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M54 10 L54 4 L48 4" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M10 54 L10 60 L16 60" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M54 54 L54 60 L48 60" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <h1 class="splash__title">AR Портрет</h1>
+    <p class="splash__subtitle">Наведи камеру на портрет — и он оживёт</p>
+
+    <!-- Steps -->
+    <ul class="splash__steps">
+      <li>
+        <span class="step-num">1</span>
+        <span>Разреши доступ к камере при запросе</span>
+      </li>
+      <li>
+        <span class="step-num">2</span>
+        <span>Направь камеру на портрет</span>
+      </li>
+      <li>
+        <span class="step-num">3</span>
+        <span>Держи ровно — видео запустится автоматически</span>
+      </li>
+    </ul>
+
+    <a class="btn-start" href="ar.html">
+      <span>Запустить AR</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M5 12h14M12 5l7 7-7 7"/>
+      </svg>
+    </a>
+
+    <p class="splash__note">
+      Работает в браузере Chrome / Safari.<br/>
+      Требуется HTTPS и разрешение камеры.
+    </p>
+
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="description" content="AR сцена — портрет оживает" />
+  <title>AR Портрет — Сцена</title>
+
+  <!-- A-Frame -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <!-- MindAR Image Tracking -->
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    /* Force A-Frame canvas to fill screen */
+    a-scene { position: fixed; inset: 0; }
+    body { margin: 0; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body>
+
+  <!-- ======================================
+       AR OVERLAY UI  (above the camera)
+       ====================================== -->
+  <div id="ar-ui">
+
+    <!-- Top bar -->
+    <div class="ar-topbar">
+      <a class="ar-topbar__back" href="index.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+        Назад
+      </a>
+      <div class="ar-topbar__badge">
+        <span class="ar-topbar__dot"></span>
+        AR Live
+      </div>
+    </div>
+
+    <!-- Finder frame (visual helper) -->
+    <div class="ar-finder" id="arFinder"><span></span></div>
+
+    <!-- Bottom scanning hint -->
+    <div class="ar-hint">
+      <div class="ar-hint__inner" id="arHint">
+        📸 Наведи камеру на портрет
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ======================================
+       A-FRAME AR SCENE
+       ====================================== -->
+  <a-scene
+    id="arScene"
+    mindar-image="
+      imageTargetSrc: assets/targets.mind;
+      autoStart: true;
+      uiLoading: no;
+      uiScanning: no;
+      uiError: no;
+    "
+    color-space="sRGB"
+    renderer="colorManagement: true; physicallyCorrectLights: true;"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+  >
+
+    <a-assets>
+      <!--
+        ┌──────────────────────────────────────────────────────────┐
+        │  ЗАМЕНИ portrait-video.mp4 на имя своего видеофайла!    │
+        │  Файл должен лежать в папке assets/                      │
+        └──────────────────────────────────────────────────────────┘
+      -->
+      <video
+        id="portrait-video"
+        src="assets/portrait-video.mp4"
+        preload="auto"
+        loop
+        playsinline
+        webkit-playsinline
+        crossorigin="anonymous"
+      ></video>
+    </a-assets>
+
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <!--
+      mindar-image-target index="0" — первый (и единственный) маркер
+      из файла targets.mind
+
+      Размеры plane подбираются под пропорции маркера.
+      width="1" соответствует ширине маркера = 1 единица A-Frame.
+      Измени height под соотношение сторон своего фото (portrait — обычно 3/4).
+    -->
+    <a-entity mindar-image-target="targetIndex: 0">
+      <a-video
+        id="arVideo"
+        src="#portrait-video"
+        position="0 0 0"
+        width="1"
+        height="1.333"
+        rotation="0 0 0"
+      ></a-video>
+    </a-entity>
+
+  </a-scene>
+
+  <!-- ======================================
+       LOGIC — events & UI updates
+       ====================================== -->
+  <script>
+    const hint    = document.getElementById('arHint');
+    const finder  = document.getElementById('arFinder');
+    const video   = document.getElementById('portrait-video');
+    const scene   = document.getElementById('arScene');
+
+    // Called when MindAR detects the target
+    function onTargetFound() {
+      console.log('[AR] Target found');
+
+      // Update UI
+      hint.textContent = '✅ Портрет найден!';
+      hint.classList.remove('hidden');
+      finder.classList.add('found');
+
+      // Play video
+      video.play().catch(err => console.warn('[AR] Video play error:', err));
+
+      // Hide hint after 2.5s
+      setTimeout(() => hint.classList.add('hidden'), 2500);
+    }
+
+    // Called when MindAR loses the target
+    function onTargetLost() {
+      console.log('[AR] Target lost');
+
+      // Pause video
+      video.pause();
+
+      // Restore UI
+      finder.classList.remove('found');
+      hint.textContent = '📸 Наведи камеру на портрет';
+      hint.classList.remove('hidden');
+    }
+
+    // Bind MindAR events after scene loads
+    scene.addEventListener('loaded', () => {
+      const target = document.querySelector('[mindar-image-target]');
+      if (target) {
+        target.addEventListener('targetFound', onTargetFound);
+        target.addEventListener('targetLost',  onTargetLost);
+      }
+    });
+
+    // Handle loading screen
+    scene.addEventListener('arReady', () => {
+      console.log('[AR] MindAR ready — scanning started');
+    });
+
+    scene.addEventListener('arError', (err) => {
+      console.error('[AR] MindAR error:', err);
+      hint.textContent = '⚠️ Ошибка камеры. Проверьте разрешения.';
+    });
+  </script>
+
+</body>
+</html>
