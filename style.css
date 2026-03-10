@@ -31,6 +31,12 @@ html, body {
   overflow-x: hidden;
 }
 
+/* AR page: camera must show through — no dark background */
+html:has(body.ar-page),
+body.ar-page {
+  background: transparent !important;
+}
+
 /* =============================================
    SPLASH SCREEN
    ============================================= */

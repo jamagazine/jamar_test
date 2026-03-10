@@ -17,7 +17,7 @@
 
   <style>
     /* A-Frame manages its own canvas sizing — do NOT override a-scene position */
-    body { margin: 0; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; }
+    body { margin: 0; overflow: hidden; background: transparent; font-family: 'Inter', sans-serif; }
 
     /* Loading overlay */
     #loading-overlay {
@@ -69,7 +69,7 @@
     #error-box.visible { display: block; }
   </style>
 </head>
-<body>
+<body class="ar-page">
 
   <!-- ======================================
        AR OVERLAY UI  (above the camera)
