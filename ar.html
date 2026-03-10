@@ -6,12 +6,18 @@
   <meta name="description" content="AR сцена — портрет оживает" />
   <title>AR Портрет — Сцена</title>
 
+  <!-- Preconnect to CDn domains — reduces handshake time on first load -->
+  <link rel="preconnect" href="https://aframe.io" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="https://aframe.io" />
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+
   <!-- A-Frame 1.4.0 — required for MindAR 1.2.5 compatibility -->
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <!-- MindAR Image Tracking -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 
@@ -123,6 +129,10 @@
       uiLoading: yes;
       uiScanning: yes;
       uiError: yes;
+      filterMinCF: 0.01;
+      filterBeta: 10;
+      missTolerance: 10;
+      warmupTolerance: 3;
     "
     color-space="sRGB"
     renderer="colorManagement: true; alpha: true;"
@@ -140,7 +150,7 @@
       <video
         id="portrait-video"
         src="assets/portrait-video.mp4"
-        preload="auto"
+        preload="none"
         loop
         playsinline
         webkit-playsinline
