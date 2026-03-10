@@ -99,12 +99,28 @@
     <!-- Finder frame (visual helper) -->
     <div class="ar-finder" id="arFinder"><span></span></div>
 
-    <!-- Bottom scanning hint -->
+    <!-- Bottom scanning hint (positioned to bottom third via CSS) -->
     <div class="ar-hint">
       <div class="ar-hint__inner" id="arHint">
         📸 Наведи камеру на портрет
       </div>
     </div>
+
+    <!-- Sound toggle button — hidden until targetFound -->
+    <button id="soundBtn" class="ar-sound-btn" aria-label="Включить звук" hidden>
+      <!-- muted icon -->
+      <svg id="iconMuted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        <line x1="23" y1="9" x2="17" y2="15"/>
+        <line x1="17" y1="9" x2="23" y2="15"/>
+      </svg>
+      <!-- unmuted icon -->
+      <svg id="iconUnmuted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+      </svg>
+    </button>
 
   </div>
 
@@ -129,10 +145,10 @@
       uiLoading: yes;
       uiScanning: yes;
       uiError: yes;
-      filterMinCF: 0.01;
-      filterBeta: 10;
+      filterMinCF: 0.0001;
+      filterBeta: 0.001;
       missTolerance: 10;
-      warmupTolerance: 3;
+      warmupTolerance: 5;
     "
     color-space="sRGB"
     renderer="colorManagement: true; alpha: true;"
@@ -152,6 +168,7 @@
         src="assets/portrait-video.mp4"
         preload="none"
         loop
+        muted
         playsinline
         webkit-playsinline
         crossorigin="anonymous"
@@ -193,6 +210,16 @@
     const errorBox = document.getElementById('error-box');
     const loadingTitle = document.getElementById('loading-title');
     const loadingSub   = document.getElementById('loading-sub');
+    const soundBtn     = document.getElementById('soundBtn');
+    const iconMuted    = document.getElementById('iconMuted');
+    const iconUnmuted  = document.getElementById('iconUnmuted');
+
+    // Sound toggle
+    soundBtn.addEventListener('click', () => {
+      video.muted = !video.muted;
+      iconMuted.style.display   = video.muted ? '' : 'none';
+      iconUnmuted.style.display = video.muted ? 'none' : '';
+    });
 
     function hideOverlay() {
       overlay.classList.add('fade-out');
@@ -215,6 +242,8 @@
       finder.classList.add('found');
       video.play().catch(err => console.warn('[AR] Video play error:', err));
       setTimeout(() => hint.classList.add('hidden'), 2500);
+      // Show sound button after first detection
+      soundBtn.hidden = false;
     }
 
     // Called when MindAR loses the target
@@ -252,10 +281,27 @@
         ? detail
         : (detail?.message || JSON.stringify(detail));
 
-      if (msg && msg.toLowerCase().includes('fetch')) {
-        showError('⚠️ Файл targets.mind не найден.\nПоложи скомпилированный маркер в папку assets/ и задеплой снова.');
-      } else if (msg && msg.toLowerCase().includes('camera')) {
-        showError('📷 Нет доступа к камере.\nРазреши камеру в настройках браузера.');
+      const isPermissionDenied =
+        msg && (
+          msg.includes('PermissionDeniedError') ||
+          msg.includes('NotAllowedError') ||
+          msg.toLowerCase().includes('permission denied') ||
+          msg.toLowerCase().includes('camera') ||
+          msg.toLowerCase().includes('not allowed')
+        );
+
+      if (isPermissionDenied) {
+        loadingTitle.textContent = 'Доступ запрещён';
+        loadingSub.textContent = '';
+        document.querySelector('.loading-spinner').style.display = 'none';
+        errorBox.innerHTML = `
+          <p>📷 Доступ к камере запрещён.</p>
+          <p>Чтобы увидеть магию — разреши доступ в настройках браузера и обнови страницу.</p>
+          <button onclick="window.location.reload()" class="error-reload-btn">Дать доступ и повторить</button>
+        `;
+        errorBox.classList.add('visible');
+      } else if (msg && msg.toLowerCase().includes('fetch')) {
+        showError('⚠️ Файл targets.mind не найден.\nПоложи скомпилированный маркер в assets/ и задеплой снова.');
       } else {
         showError('❌ Ошибка AR: ' + (msg || 'неизвестная'));
       }

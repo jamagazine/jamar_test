@@ -291,13 +291,13 @@ body.ar-page {
   50%       { opacity: 0.25; }
 }
 
-/* Scanning hint */
+/* Scanning hint — bottom third of screen */
 .ar-hint {
   flex: 1;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding-bottom: 60px;
+  padding-bottom: 100px; /* bottom third, not center */
 }
 
 .ar-hint__inner {
@@ -312,6 +312,53 @@ body.ar-page {
   transition: opacity 0.4s;
 }
 .ar-hint__inner.hidden { opacity: 0; }
+
+/* Sound toggle button */
+.ar-sound-btn {
+  position: fixed;
+  bottom: 36px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(12px);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: all;
+  z-index: 110;
+  transition: background 0.2s, transform 0.15s;
+  animation: slide-in-btn 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.ar-sound-btn svg { width: 20px; height: 20px; }
+.ar-sound-btn:hover { background: rgba(167,139,250,0.3); }
+.ar-sound-btn:active { transform: scale(0.92); }
+
+@keyframes slide-in-btn {
+  from { transform: translateY(20px) scale(0.8); opacity: 0; }
+  to   { transform: translateY(0)    scale(1);   opacity: 1; }
+}
+
+/* Reload button inside error box */
+.error-reload-btn {
+  margin-top: 14px;
+  display: inline-block;
+  background: rgba(239,68,68,0.2);
+  border: 1px solid rgba(239,68,68,0.5);
+  color: #fca5a5;
+  font-family: var(--font);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.error-reload-btn:hover { background: rgba(239,68,68,0.35); }
 
 /* Finder corners */
 .ar-finder {
