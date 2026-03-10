@@ -16,9 +16,57 @@
   <link rel="stylesheet" href="style.css" />
 
   <style>
-    /* Force A-Frame canvas to fill screen */
-    a-scene { position: fixed; inset: 0; }
+    /* A-Frame manages its own canvas sizing — do NOT override a-scene position */
     body { margin: 0; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; }
+
+    /* Loading overlay */
+    #loading-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: #0a0a0f;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 20px;
+      transition: opacity 0.5s;
+    }
+    #loading-overlay.fade-out { opacity: 0; pointer-events: none; }
+    #loading-overlay.gone { display: none; }
+
+    .loading-spinner {
+      width: 52px; height: 52px;
+      border: 3px solid rgba(167,139,250,0.15);
+      border-top-color: #a78bfa;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      color: rgba(255,255,255,0.75);
+      font-size: 0.95rem;
+      text-align: center;
+      max-width: 280px;
+      line-height: 1.5;
+    }
+    .loading-text strong {
+      display: block;
+      color: #fff;
+      font-size: 1.05rem;
+      margin-bottom: 6px;
+    }
+
+    #error-box {
+      display: none;
+      background: rgba(239,68,68,0.12);
+      border: 1px solid rgba(239,68,68,0.4);
+      border-radius: 14px;
+      padding: 16px 22px;
+      color: #fca5a5;
+      font-size: 0.88rem;
+      max-width: 300px;
+      text-align: center;
+      line-height: 1.5;
+    }
+    #error-box.visible { display: block; }
   </style>
 </head>
 <body>
@@ -54,6 +102,16 @@
 
   </div>
 
+  <!-- Loading overlay (visible before AR starts) -->
+  <div id="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">
+      <strong id="loading-title">Инициализация AR…</strong>
+      <span id="loading-sub">Загрузка маркера и камеры</span>
+    </div>
+    <div id="error-box"></div>
+  </div>
+
   <!-- ======================================
        A-FRAME AR SCENE
        ====================================== -->
@@ -62,12 +120,12 @@
     mindar-image="
       imageTargetSrc: assets/targets.mind;
       autoStart: true;
-      uiLoading: no;
-      uiScanning: no;
-      uiError: no;
+      uiLoading: yes;
+      uiScanning: yes;
+      uiError: yes;
     "
     color-space="sRGB"
-    renderer="colorManagement: true; physicallyCorrectLights: true;"
+    renderer="colorManagement: true;"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
   >
@@ -121,38 +179,48 @@
     const finder  = document.getElementById('arFinder');
     const video   = document.getElementById('portrait-video');
     const scene   = document.getElementById('arScene');
+    const overlay = document.getElementById('loading-overlay');
+    const errorBox = document.getElementById('error-box');
+    const loadingTitle = document.getElementById('loading-title');
+    const loadingSub   = document.getElementById('loading-sub');
+
+    function hideOverlay() {
+      overlay.classList.add('fade-out');
+      setTimeout(() => overlay.classList.add('gone'), 500);
+    }
+
+    function showError(msg) {
+      loadingTitle.textContent = 'Ошибка';
+      loadingSub.textContent = '';
+      document.querySelector('.loading-spinner').style.display = 'none';
+      errorBox.textContent = msg;
+      errorBox.classList.add('visible');
+    }
 
     // Called when MindAR detects the target
     function onTargetFound() {
       console.log('[AR] Target found');
-
-      // Update UI
       hint.textContent = '✅ Портрет найден!';
       hint.classList.remove('hidden');
       finder.classList.add('found');
-
-      // Play video
       video.play().catch(err => console.warn('[AR] Video play error:', err));
-
-      // Hide hint after 2.5s
       setTimeout(() => hint.classList.add('hidden'), 2500);
     }
 
     // Called when MindAR loses the target
     function onTargetLost() {
       console.log('[AR] Target lost');
-
-      // Pause video
       video.pause();
-
-      // Restore UI
       finder.classList.remove('found');
       hint.textContent = '📸 Наведи камеру на портрет';
       hint.classList.remove('hidden');
     }
 
-    // Bind MindAR events after scene loads
+    // Bind target events
     scene.addEventListener('loaded', () => {
+      console.log('[AR] Scene loaded');
+      loadingTitle.textContent = 'Запуск камеры…';
+      loadingSub.textContent = 'Разреши доступ к камере в браузере';
       const target = document.querySelector('[mindar-image-target]');
       if (target) {
         target.addEventListener('targetFound', onTargetFound);
@@ -160,14 +228,27 @@
       }
     });
 
-    // Handle loading screen
+    // MindAR is initialised and scanning
     scene.addEventListener('arReady', () => {
-      console.log('[AR] MindAR ready — scanning started');
+      console.log('[AR] MindAR ready');
+      hideOverlay();
     });
 
-    scene.addEventListener('arError', (err) => {
-      console.error('[AR] MindAR error:', err);
-      hint.textContent = '⚠️ Ошибка камеры. Проверьте разрешения.';
+    // MindAR error (missing .mind file, camera denied, etc.)
+    scene.addEventListener('arError', (evt) => {
+      const detail = evt.detail || evt;
+      console.error('[AR] MindAR error:', detail);
+      const msg = (typeof detail === 'string')
+        ? detail
+        : (detail?.message || JSON.stringify(detail));
+
+      if (msg && msg.toLowerCase().includes('fetch')) {
+        showError('⚠️ Файл targets.mind не найден.\nПоложи скомпилированный маркер в папку assets/ и задеплой снова.');
+      } else if (msg && msg.toLowerCase().includes('camera')) {
+        showError('📷 Нет доступа к камере.\nРазреши камеру в настройках браузера.');
+      } else {
+        showError('❌ Ошибка AR: ' + (msg || 'неизвестная'));
+      }
     });
   </script>
 
